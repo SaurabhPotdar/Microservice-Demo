@@ -1,10 +1,10 @@
-package com.cg.movieservice2;
+package com.cg.movieservice;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class MovieService2ApplicationTests {
+class MovieService1ApplicationTests {
 
 	@Test
 	void contextLoads() {
