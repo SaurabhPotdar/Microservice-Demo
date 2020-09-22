@@ -18,9 +18,9 @@ public class MovieController {
 	@Autowired
 	MovieRepository movieRepository;
 
-	@GetMapping("/{name}")
-	public Movie getMovie(@PathVariable("name") String name) {
-		return movieRepository.findByMovieName(name);
+	@GetMapping("/{id}")
+	public Movie getMovie(@PathVariable("id") int id) {
+		return movieRepository.findById(id).orElse(null);
 	}
 	
 	@PostMapping

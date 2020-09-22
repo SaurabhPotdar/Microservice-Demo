@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,6 +21,7 @@ import com.cg.catalogservice.dto.Rating;
 public class CatalogController {
 
 	@Bean
+	@LoadBalanced
 	public RestTemplate getRestTemplate() {
 		return new RestTemplate();
 	}
@@ -31,11 +33,16 @@ public class CatalogController {
 	public List<CatalogItem> getCatalog(@PathVariable("userId") String userId){
 		List<CatalogItem> catalogItems = new ArrayList<>();
 		CatalogItem catalogItem = new CatalogItem();
-		ResponseEntity<Rating[]> response = restTemplate.getForEntity("http://localhost:8082/ratings/"+userId, Rating[].class);
+		
+		//We can create a wrapper class RatingList which has list of rating, and use getForObject(url,RatingList.class)
+		//Basically return an object instead of list
+		ResponseEntity<Rating[]> response = restTemplate.getForEntity("http://rating-service/ratings/"+userId, Rating[].class);
 		Rating[] ratings = response.getBody();
+		System.out.println(ratings.length);
+		
 		for(Rating rating:ratings) {
 			System.out.println(rating);
-			Movie movie = restTemplate.getForObject("http://localhost:8080/movies/"+rating.getMovieId(), Movie.class);
+			Movie movie = restTemplate.getForObject("http://movie-service/movies/"+rating.getMovieId(), Movie.class);
 			System.out.println(movie);
 			catalogItem.setName(movie.getMovieName());
 			catalogItem.setDesc(movie.getDescription());
