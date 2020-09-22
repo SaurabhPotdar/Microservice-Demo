@@ -12,11 +12,14 @@ public class Rating {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int ratingId;
 	private int movieId;
+	private int userId;
 	private int rating;
 
-	public Rating(int ratingId, int movieId, int rating) {
+	public Rating(int ratingId, int movieId, int userId, int rating) {
+		super();
 		this.ratingId = ratingId;
 		this.movieId = movieId;
+		this.userId = userId;
 		this.rating = rating;
 	}
 
@@ -47,4 +50,11 @@ public class Rating {
 		this.ratingId = ratingId;
 	}
 
+	public int getUserId() {
+		return userId;
+	}
+
+	public void setUserId(int userId) {
+		this.userId = userId;
+	}
 }
