@@ -23,4 +23,9 @@ public class RatingController {
 		return ratings;
 	}
 	
+	@RequestMapping("/test/{userId}")
+	public String get(@PathVariable("userId") String userId){
+		return userId;
+	}
+	
 }
