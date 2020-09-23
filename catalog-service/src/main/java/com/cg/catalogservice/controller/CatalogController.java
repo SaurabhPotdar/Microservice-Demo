@@ -15,6 +15,8 @@ import org.springframework.web.client.RestTemplate;
 import com.cg.catalogservice.dto.CatalogItem;
 import com.cg.catalogservice.dto.Movie;
 import com.cg.catalogservice.dto.Rating;
+import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
+import com.netflix.hystrix.contrib.javanica.annotation.HystrixProperty;
 
 @RestController
 @RequestMapping("/catalog")
@@ -25,25 +27,33 @@ public class CatalogController {
 	public RestTemplate getRestTemplate() {
 		return new RestTemplate();
 	}
-	
+
 	@Autowired
 	public RestTemplate restTemplate;
-	
+
 	@RequestMapping("/{userId}")
-	public List<CatalogItem> getCatalog(@PathVariable("userId") String userId){
+	@HystrixCommand(fallbackMethod = "getCatalogFallback", threadPoolKey = "catalogPool", 
+		threadPoolProperties = {
+			@HystrixProperty(name = "coreSize", value = "20"),
+			@HystrixProperty(name = "maxQueueSize", value = "0"),
+			}, 
+		commandProperties = {
+			@HystrixProperty(name = "execution.isolation.thread.timeoutInMilliseconds", value = "2000"),
+			@HystrixProperty(name = "circuitBreaker.requestVolumeThreshold", value = "10"),
+			@HystrixProperty(name = "circuitBreaker.errorThresholdPercentage", value = "50"),
+			@HystrixProperty(name = "circuitBreaker.sleepWindowInMilliseconds", value = "5000"), })
+	public List<CatalogItem> getCatalog(@PathVariable("userId") String userId) {
 		List<CatalogItem> catalogItems = new ArrayList<>();
 		CatalogItem catalogItem = new CatalogItem();
-		
-		//We can create a wrapper class RatingList which has list of rating, and use getForObject(url,RatingList.class)
-		//Basically return an object instead of list
-		ResponseEntity<Rating[]> response = restTemplate.getForEntity("http://rating-service/ratings/"+userId, Rating[].class);
+
+		// We can create a wrapper class RatingList which has list of rating, and use getForObject(url,RatingList.class)
+		// Basically return an object instead of list
+		ResponseEntity<Rating[]> response = restTemplate.getForEntity("http://rating-service/ratings/" + userId,
+				Rating[].class);
 		Rating[] ratings = response.getBody();
-		System.out.println(ratings.length);
-		
-		for(Rating rating:ratings) {
-			System.out.println(rating);
-			Movie movie = restTemplate.getForObject("http://movie-service/movies/"+rating.getMovieId(), Movie.class);
-			System.out.println(movie);
+
+		for (Rating rating : ratings) {
+			Movie movie = restTemplate.getForObject("http://movie-service/movies/" + rating.getMovieId(), Movie.class);
 			catalogItem.setName(movie.getMovieName());
 			catalogItem.setDesc(movie.getDescription());
 			catalogItem.setRating(rating.getRating());
@@ -51,5 +61,12 @@ public class CatalogController {
 		}
 		return catalogItems;
 	}
+
+	public List<CatalogItem> getCatalogFallback(@PathVariable("userId") String userId) {
+		return null;
+	}
 	
+	//Create Separate methods for getMovies and getRating with their own fallback methods
+	//Combine the results in getCatalog
+
 }
